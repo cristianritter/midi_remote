@@ -1,22 +1,50 @@
 #include <Arduino.h>
 #include <pinout.h>
 #include <pinmode.h>
+#include <ArduinoUniqueID.h>
 
-uint32_t vetor_teclado;
+uint32_t last_keys = 0;
+uint32_t current_keys = 0;
+unsigned long key_times[22];
+const int lamps_list[] = { lamp1, lamp2, lamp3, lamp4, lamp5, lamp6, lamp7, lamp8, lamp9,
+                 lamp10, lamp11, lamp12, lamp13, lamp14, lamp15, lamp16, lamp17,
+                 lamp18, lamp19, lamp20, lamp21, lamp22 };
 
+
+void evento_teclado(uint32_t _teclas_ativadas);
+void testa_lamps();
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
+  //Serial1.begin(9600);
+  //Serial2.begin(9600); 
   definir_pinout();
+  testa_lamps();
   }
 
 void liga_lamp(int lamp){
-  digitalWrite(lamp, HIGH);
+  digitalWrite(lamp, LOW);
 }
 
 void desliga_lamp(int lamp){
-  digitalWrite(lamp, LOW);
+  digitalWrite(lamp, HIGH);
+}
+
+void testa_lamps(){
+  for (int i=0; i<=21; i++){
+    liga_lamp(lamps_list[i]);
+  }
+  delay(500);
+  for (int i=0; i<=21; i++){
+    desliga_lamp(lamps_list[i]);
+  }
+  delay(500);
+  for (int i=0; i<=21; i++){
+    liga_lamp(lamps_list[i]);
+    delay(200);
+    desliga_lamp(lamps_list[i]);
+  }
 }
 
 void set_out_in_in(int out, int in1, int in2){
@@ -51,7 +79,7 @@ uint32_t le_teclas(){
   }
   //thirdline
   status_teclas[2]=0;
-  set_out_in_in(Row3, Row0, Row1);
+  set_out_in_in(Row2, Row0, Row1);
   for (int i=0; i<=7; i++){
     int status = digitalRead(colunas_lista[i]);
     if (status == LOW) {
@@ -103,19 +131,50 @@ uint32_t le_teclas(){
     bitSet(teclas_ativadas, 20);
   if (status_teclas[1] & 0b10000000)
     bitSet(teclas_ativadas, 21);
+    //Serial.println(teclas_ativadas);
+  if (last_keys != teclas_ativadas){
+    evento_teclado(teclas_ativadas);
+    last_keys = teclas_ativadas;
+  }
     return teclas_ativadas;
 }
 
+void evento_teclado(uint32_t _teclas_ativadas){
+  uint32_t teclas_que_mudaram = (_teclas_ativadas ^ last_keys);
+  for (int i=0; i<=21; i++){
+    if (teclas_que_mudaram & (1 << i)){
+        if(_teclas_ativadas & (1 << i)){
+          Serial.print("Tecla pressionada: ");
+          Serial.println(i);
+          if (!(current_keys & (1 << i))){
+            bitSet(current_keys, i);
+            liga_lamp(lamps_list[i]);
+            key_times[i] = millis();
+          }
+          else {
+            bitClear(current_keys, i); 
+            desliga_lamp(lamps_list[i]);
+          }
+        }
+        else{
+          Serial.print("Tecla solta: ");
+          Serial.println(i);
+          if (millis() > key_times[i] + 500){
+            bitClear(current_keys, i);
+            desliga_lamp(lamps_list[i]);
+            
+          }
+        }
+    }
+  }
+  Serial.println(current_keys, BIN);
+  //UniqueIDdump(Serial);
+}
+
 void loop() {
-  vetor_teclado = le_teclas();
-  Serial.println(vetor_teclado, BIN);
+  le_teclas();
   delay(50);
 
-  //for (int i=0; i<20; i++){
-    //Serial.print(teclado[i]);
-    //Serial.print(' ');
-  //}
-  //Serial.print('\n');
   // put your main code here, to run repeatedly:
 }
 
@@ -124,12 +183,14 @@ void loop() {
   routine is run between each time loop() runs, so using delay inside loop can
   delay response. Multiple bytes of data may be available.
 */
+
 void serialEvent1(){
-  Serial.print("SerialEvent1");
+  //Serial.println("Incoming SerialEvent1, ecoando para Serial2");
+  //Serial2.println()
 //statements
 }
 
 void serialEvent2(){
-  Serial.print("SerialEvent1");
+  //Serial.print("SerialEvent1");
 //statements
 }
