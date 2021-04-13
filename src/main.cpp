@@ -6,9 +6,9 @@
 uint32_t last_keys = 0;
 uint32_t current_keys = 0;
 unsigned long key_times[22];
-const int lamps_list[] = { lamp1, lamp2, lamp3, lamp4, lamp5, lamp6, lamp7, lamp8, lamp9,
+const int lamps_list[] = { lamp0, lamp1, lamp2, lamp3, lamp4, lamp5, lamp6, lamp7, lamp8, lamp9,
                  lamp10, lamp11, lamp12, lamp13, lamp14, lamp15, lamp16, lamp17,
-                 lamp18, lamp19, lamp20, lamp21, lamp22 };
+                 lamp18, lamp19, lamp20, lamp21 };
 
 
 void evento_teclado(uint32_t _teclas_ativadas);
@@ -18,7 +18,7 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   //Serial1.begin(9600);
-  //Serial2.begin(9600); 
+  //Serial.begin(9600); 
   definir_pinout();
   testa_lamps();
   }
@@ -66,7 +66,7 @@ uint32_t le_teclas(){
     int status = digitalRead(colunas_lista[i]);
     if (status == LOW) {
       bitSet(status_teclas[0],i);
-    }
+      }
   }
   //secondline
   status_teclas[1]=0;
@@ -87,51 +87,50 @@ uint32_t le_teclas(){
     }
   }
   //finalizacao
-  if (status_teclas[0] & 0b01000000)
-    bitSet(teclas_ativadas, 0);
-  if (status_teclas[0] & 0b00100000)
-    bitSet(teclas_ativadas, 1);
-  if (status_teclas[0] & 0b00010000)
-    bitSet(teclas_ativadas, 2);
-  if (status_teclas[0] & 0b00001000)
-    bitSet(teclas_ativadas, 3);
-  if (status_teclas[0] & 0b00000100)
-    bitSet(teclas_ativadas, 4);
-  if (status_teclas[0] & 0b00000010)
-    bitSet(teclas_ativadas, 5);
   if (status_teclas[0] & 0b00000001)
     bitSet(teclas_ativadas, 6);
-  if (status_teclas[1] & 0b01000000)
-    bitSet(teclas_ativadas, 7);
-  if (status_teclas[1] & 0b00100000)
-    bitSet(teclas_ativadas, 8);
-  if (status_teclas[1] & 0b00010000)
-    bitSet(teclas_ativadas, 9);
-  if (status_teclas[1] & 0b00001000)
-    bitSet(teclas_ativadas, 10);
-  if (status_teclas[1] & 0b00000100)
-    bitSet(teclas_ativadas, 11);
-  if (status_teclas[1] & 0b00000010)
-    bitSet(teclas_ativadas, 12);
-  if (status_teclas[1] & 0b00000001)
-    bitSet(teclas_ativadas, 13);
-  if (status_teclas[2] & 0b01000000)
-    bitSet(teclas_ativadas, 14);
-  if (status_teclas[2] & 0b00100000)
-    bitSet(teclas_ativadas, 15);
-  if (status_teclas[2] & 0b00010000)
-    bitSet(teclas_ativadas, 16);
-  if (status_teclas[2] & 0b00001000)
-    bitSet(teclas_ativadas, 17);
-  if (status_teclas[2] & 0b00000100)
-    bitSet(teclas_ativadas, 18);
-  if (status_teclas[2] & 0b00000010)
-    bitSet(teclas_ativadas, 19);
+  if (status_teclas[0] & 0b00000010)
+    bitSet(teclas_ativadas, 5);
+  if (status_teclas[0] & 0b00000100)
+    bitSet(teclas_ativadas, 4);
+  if (status_teclas[0] & 0b00001000)
+    bitSet(teclas_ativadas, 3);
+  if (status_teclas[0] & 0b00010000)
+    bitSet(teclas_ativadas, 2);
+  if (status_teclas[0] & 0b00100000)
+    bitSet(teclas_ativadas, 1);
+  if (status_teclas[0] & 0b01000000)
+    bitSet(teclas_ativadas, 0);
   if (status_teclas[0] & 0b10000000)
     bitSet(teclas_ativadas, 20);
+  if (status_teclas[1] & 0b00000001)
+    bitSet(teclas_ativadas, 13);
+  if (status_teclas[1] & 0b00000010)
+    bitSet(teclas_ativadas, 12);
+  if (status_teclas[1] & 0b00000100)
+    bitSet(teclas_ativadas, 11);
+  if (status_teclas[1] & 0b00001000)
+    bitSet(teclas_ativadas, 10);
+  if (status_teclas[1] & 0b00010000)
+    bitSet(teclas_ativadas, 9);
+  if (status_teclas[1] & 0b00100000)
+    bitSet(teclas_ativadas, 8);
+  if (status_teclas[1] & 0b01000000)
+    bitSet(teclas_ativadas, 7);
   if (status_teclas[1] & 0b10000000)
     bitSet(teclas_ativadas, 21);
-    //Serial.println(teclas_ativadas);
+  if (status_teclas[2] & 0b00000010)
+    bitSet(teclas_ativadas, 19);
+  if (status_teclas[2] & 0b00000100)
+    bitSet(teclas_ativadas, 18);
+  if (status_teclas[2] & 0b00001000)
+    bitSet(teclas_ativadas, 17);
+  if (status_teclas[2] & 0b00010000)
+    bitSet(teclas_ativadas, 16);
+  if (status_teclas[2] & 0b00100000)
+    bitSet(teclas_ativadas, 15);
+  if (status_teclas[2] & 0b01000000)
+    bitSet(teclas_ativadas, 14);
   if (last_keys != teclas_ativadas){
     evento_teclado(teclas_ativadas);
     last_keys = teclas_ativadas;
@@ -142,11 +141,13 @@ uint32_t le_teclas(){
 void evento_teclado(uint32_t _teclas_ativadas){
   uint32_t teclas_que_mudaram = (_teclas_ativadas ^ last_keys);
   for (int i=0; i<=21; i++){
-    if (teclas_que_mudaram & (1 << i)){
-        if(_teclas_ativadas & (1 << i)){
+    if (teclas_que_mudaram & ((uint32_t)1 << i)){
+        Serial.println(_teclas_ativadas, BIN);
+        Serial.println(((uint32_t)1 << i), BIN);
+        if(_teclas_ativadas & ((uint32_t)1 << i)){
           Serial.print("Tecla pressionada: ");
           Serial.println(i);
-          if (!(current_keys & (1 << i))){
+          if (!(current_keys & ((uint32_t)1 << i))){
             bitSet(current_keys, i);
             liga_lamp(lamps_list[i]);
             key_times[i] = millis();
@@ -167,7 +168,7 @@ void evento_teclado(uint32_t _teclas_ativadas){
         }
     }
   }
-  Serial.println(current_keys, BIN);
+ // Serial.println(current_keys, BIN);
   //UniqueIDdump(Serial);
 }
 
@@ -185,8 +186,8 @@ void loop() {
 */
 
 void serialEvent1(){
-  //Serial.println("Incoming SerialEvent1, ecoando para Serial2");
-  //Serial2.println()
+  //Serial.println("Incoming SerialEvent1, ecoando para Serial");
+  //Serial.println()
 //statements
 }
 

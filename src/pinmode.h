@@ -3,6 +3,7 @@
     #include <Arduino.h>
     #include "pinout.h"
     void definir_pinout(){
+        pinMode(lamp0, OUTPUT);  
         pinMode(lamp1, OUTPUT);
         pinMode(lamp2, OUTPUT);
         pinMode(lamp3, OUTPUT);
@@ -24,7 +25,6 @@
         pinMode(lamp19, OUTPUT);
         pinMode(lamp20, OUTPUT);
         pinMode(lamp21, OUTPUT);
-        pinMode(lamp22, OUTPUT);  
         pinMode(Col0, INPUT_PULLUP);  
         pinMode(Col1, INPUT_PULLUP);  
         pinMode(Col2, INPUT_PULLUP);  
