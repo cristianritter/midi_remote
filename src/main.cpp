@@ -5,7 +5,7 @@
 #include <EEPROM.h>
 #include <MIDI.h>
 
-MIDI_CREATE_INSTANCE(HardwareSerial, Serial2, Midi);
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial2, Midi);  //porta midi selecionada
 
 uint32_t last_keys = 0;
 uint32_t current_keys = 0;
@@ -13,7 +13,8 @@ unsigned long key_times[22];
 const int lamps_list[] = { lamp0, lamp1, lamp2, lamp3, lamp4, lamp5, lamp6, lamp7, lamp8, lamp9,
                  lamp10, lamp11, lamp12, lamp13, lamp14, lamp15, lamp16, lamp17,
                  lamp18, lamp19, lamp20, lamp21 };
-
+unsigned long time_le_teclas = 0;
+unsigned long last_key_event = 0;
 
 void evento_teclado(uint32_t _teclas_ativadas);
 void testa_lamps();
@@ -21,11 +22,9 @@ void testa_lamps();
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  Midi.begin();
-  //Serial1.begin(9600);
+  Midi.begin();   //serial2
   //Serial2.begin(31250);
   //Serial1.begin(9600);
-  //Serial.begin(9600); 
   definir_pinout();
   testa_lamps();
   }
@@ -44,14 +43,14 @@ void testa_lamps(){
   for (int i=0; i<=21; i++){
     liga_lamp(lamps_list[i]);
   }
-  delay(50);
+  delay(150);
   for (int i=0; i<=21; i++){
     desliga_lamp(lamps_list[i]);
   }
-  delay(50);
+  delay(150);
   for (int i=0; i<=21; i++){
     liga_lamp(lamps_list[i]);
-    delay(20);
+    delay(30);
     desliga_lamp(lamps_list[i]);
   }
 }
@@ -64,7 +63,7 @@ void set_out_in_in(int out, int in1, int in2){
   pinMode(in2, INPUT_PULLUP);
 }
 
-uint32_t le_teclas(){
+void le_teclas(){
   uint8_t status_teclas[3];
   uint32_t teclas_ativadas = 0;
   int colunas_lista[] = {Col0, Col1, Col2, Col3, Col4, Col5, Col6, Col7};
@@ -144,7 +143,6 @@ uint32_t le_teclas(){
     evento_teclado(teclas_ativadas);
     last_keys = teclas_ativadas;
   }
-    return teclas_ativadas;
 }
 
 void verifica_evento(char msg[400]){
@@ -169,36 +167,40 @@ void verifica_evento(char msg[400]){
 }
 
 void enviaMidi(int bt, bool estado){
-    char msg[400];
-    msg[0] = 0;
     int i=0;
     byte sysEx[14];
     int start_point;
-    if (estado == true)  start_point=0;
-    else start_point = 15;
-    for (i=0; i<100; i++){       
+    if (estado == true)  
+      start_point = 0;
+    else 
+      start_point = 14;
+    for (i=0; i<14; i++){       
         int valor = EEPROM.read(bt*100+i+start_point);
+        Serial.print(valor,HEX);
+        Serial.print("-");
         sysEx[i] = valor;
-        if (valor == 247) {
-          break;
-        } 
-      //}
-    }
-    Serial.print(msg);
-    //Serial2.print(msg);
+      }
+    Serial.println(") ");
     Midi.sendSysEx(i, sysEx, false);
 }
 
 void evento_teclado(uint32_t _teclas_ativadas){
-  delay(150);
-  uint32_t teclas_que_mudaram = (_teclas_ativadas ^ last_keys);
+  if ( (last_key_event+300) < millis() ){
+    last_key_event = millis();
+  }
+  else{
+    return;
+  }
+  uint32_t teclas_que_mudaram;
+  teclas_que_mudaram = (_teclas_ativadas ^ last_keys);
   for (int i=0; i<=21; i++){
     if (teclas_que_mudaram & ((uint32_t)1 << i)){    //se a tecla mudou desde o ultimo evento
         if(_teclas_ativadas & ((uint32_t)1 << i)){   //se a tecla esta ativada agora
           if (!(current_keys & ((uint32_t)1 << i))){ //se a funcao nao ta ativada
             bitSet(current_keys, i);
             Serial.print("Tecla ativada: ");
-            Serial.println(i);
+            Serial.print(i);
+            Serial.print("    (");
             liga_lamp(lamps_list[i]);
             enviaMidi(i, true);
             key_times[i] = millis();
@@ -206,7 +208,8 @@ void evento_teclado(uint32_t _teclas_ativadas){
           }
           else if (current_keys & ((uint32_t)1 << i)) {
               Serial.print("Tecla desativada: ");
-              Serial.println(i);
+              Serial.print(i);
+              Serial.print("    (");
               bitClear(current_keys, i); 
               desliga_lamp(lamps_list[i]);
               enviaMidi(i, false);
@@ -216,7 +219,8 @@ void evento_teclado(uint32_t _teclas_ativadas){
         if (current_keys & ((uint32_t)1 << i)){
             if (millis() > key_times[i] + 500){
                 Serial.print("Tecla desativada: ");
-                Serial.println(i);
+                Serial.print(i);
+                Serial.print("    (");
                 bitClear(current_keys, i);
                 desliga_lamp(lamps_list[i]);
                 enviaMidi(i, false);
@@ -224,15 +228,13 @@ void evento_teclado(uint32_t _teclas_ativadas){
         }
     }
   }
- // Serial.println(current_keys, BIN);
-  //UniqueIDdump(Serial);
 }
 
 void loop() {
-  le_teclas();
-  delay(50);
-
-  // put your main code here, to run repeatedly:
+  if ( (time_le_teclas+100) < millis() ){
+    time_le_teclas = millis();
+    le_teclas();
+  }
 }
 
 /*
