@@ -15,6 +15,7 @@ const int lamps_list[] = { lamp0, lamp1, lamp2, lamp3, lamp4, lamp5, lamp6, lamp
                  lamp18, lamp19, lamp20, lamp21 };
 unsigned long time_le_teclas = 0;
 unsigned long last_key_event = 0;
+int idx = 0;
 
 void evento_teclado(uint32_t _teclas_ativadas);
 void testa_lamps();
@@ -150,6 +151,8 @@ void verifica_evento(char msg[400]){
     Serial.println(msg);
     if (msg[0]=='R' && msg[1]=='E' && msg[2]=='C'){
       pch = strtok(msg, "[], ");
+      Serial.print("pch1: ");
+      Serial.println(pch);
       pch = strtok(NULL, "[], ");
       int posicao = atoi(pch);
       Serial.print("posicao:");
@@ -158,16 +161,20 @@ void verifica_evento(char msg[400]){
       while (pch != NULL)
       {
             pch = strtok(NULL, "[], ");
-            Serial.println(pch);
-            EEPROM.write(posicao*100+i, atoi(pch));
+            int datax = atoi(pch);
+            Serial.print("datax: ");
+            Serial.println(datax);
+            Serial.print("i: ");
+            Serial.println(i);
+            EEPROM.write( ((posicao*100) +i), datax);
             i++;
       }
-
     }
+    idx = 0;
 }
 
 void enviaMidi(int bt, bool estado){
-    int i=0;
+    int i;
     byte sysEx[14];
     int start_point;
     if (estado == true)  
@@ -181,7 +188,7 @@ void enviaMidi(int bt, bool estado){
         sysEx[i] = valor;
       }
     Serial.println(") ");
-    Midi.sendSysEx(i, sysEx, false);
+    Midi.sendSysEx((i+1), sysEx, false);
 }
 
 void evento_teclado(uint32_t _teclas_ativadas){
@@ -229,6 +236,7 @@ void evento_teclado(uint32_t _teclas_ativadas){
     }
   }
 }
+ 
 
 void loop() {
   if ( (time_le_teclas+100) < millis() ){
@@ -245,15 +253,15 @@ void loop() {
 
 void serialEvent(){
   char msg[400];
-  int idx = 0;
   while (Serial.available()) {
-    delay(1);
     msg[idx] = (char)Serial.read();
+    if (msg[idx] == '\n'){
+      Serial.print("Mensagem: ");
+      Serial.println(msg);
+      verifica_evento(msg);
+    }
     idx++;
   }
-  msg[idx]=0;
-  verifica_evento(msg);
-  Serial.print(msg);
 }
 
 void serialEvent1(){
