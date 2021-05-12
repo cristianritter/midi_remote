@@ -170,7 +170,6 @@ void verifica_evento(char msg[400]){
             i++;
       }
     }
-    idx = 0;
 }
 
 void enviaMidi(int bt, bool estado){
@@ -256,9 +255,11 @@ void serialEvent(){
   while (Serial.available()) {
     msg[idx] = (char)Serial.read();
     if (msg[idx] == '\n'){
+      msg[idx+1]=0;
       Serial.print("Mensagem: ");
       Serial.println(msg);
       verifica_evento(msg);
+      idx=-1;
     }
     idx++;
   }
